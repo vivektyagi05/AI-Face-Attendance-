@@ -1,0 +1,126 @@
+# =========================
+# Dependencies
+# =========================
+node_modules/
+**/node_modules/
+
+# =========================
+# Environment Files
+# =========================
+.env
+.env.local
+.env.development
+.env.production
+
+backend/.env
+frontend/.env
+ai-service/.env
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+
+backend/logs/
+backend/logs/*.log
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Build Files
+# =========================
+dist/
+build/
+
+frontend/dist/
+frontend/build/
+
+# =========================
+# Vite
+# =========================
+.vite/
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+ai-service/__pycache__/
+ai-service/**/*.pyc
+
+# =========================
+# Virtual Environment
+# =========================
+venv/
+.venv/
+env/
+
+# =========================
+# Uploads (IMPORTANT)
+# =========================
+uploads/
+backend/uploads/
+
+backend/uploads/classroom/
+backend/uploads/faces/
+backend/uploads/temp/
+
+# =========================
+# Face Recognition Data
+# =========================
+*.jpg
+*.jpeg
+*.png
+*.webp
+
+# If screenshots should stay in repo,
+# comment these lines above and keep only uploads ignored.
+
+# =========================
+# OS Files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# IDE Files
+# =========================
+.vscode/
+.idea/
+
+# =========================
+# Docker
+# =========================
+docker-data/
+mongodb-data/
+
+# =========================
+# Coverage
+# =========================
+coverage/
+.nyc_output/
+
+# =========================
+# Temporary Files
+# =========================
+*.tmp
+*.temp
+
+# =========================
+# Secrets
+# =========================
+*.pem
+*.key
+*.crt
+
+# =========================
+# Runtime Generated Files
+# =========================
+backend/uploads/**
+backend/logs/**

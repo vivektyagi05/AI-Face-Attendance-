@@ -1,0 +1,133 @@
+version: "3.9"
+
+# ══════════════════════════════════════════════════════════════
+#  SmartAttend – AI Attendance Platform (Phase 3: Full Stack)
+#  Frontend + Backend + AI Service + MongoDB
+#
+#  Access:
+#    Frontend → http://localhost:3000
+#    Backend  → http://localhost:5000
+#    AI       → http://localhost:8000
+# ══════════════════════════════════════════════════════════════
+
+services:
+
+  mongodb:
+    image: mongo:7
+    container_name: smart_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    environment:
+      MONGO_INITDB_DATABASE: smart_attendance
+    healthcheck:
+      test: ["CMD","mongosh","--eval","db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - smart_net
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: smart_ai
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      FLASK_ENV: production
+      AI_SERVICE_PORT: "8000"
+      AI_SERVICE_API_KEY: "${AI_SERVICE_API_KEY:-change_me_shared_secret}"
+      FACE_DETECTION_MODEL: hog
+      NUM_JITTERS: "1"
+      DEFAULT_THRESHOLD: "0.55"
+      NODE_BACKEND_URL: "http://backend:5000"
+    volumes:
+      - uploads_data:/app/uploads
+      - ai_logs:/app/logs
+    healthcheck:
+      test: ["CMD","python","-c","import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 15s
+      retries: 4
+      start_period: 40s
+    networks:
+      - smart_net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: smart_backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      PORT: "5000"
+      MONGODB_URI: "mongodb://mongodb:27017/smart_attendance"
+      JWT_SECRET: "${JWT_SECRET:-change_me_jwt_secret_min_32_chars}"
+      JWT_EXPIRES_IN: 7d
+      BCRYPT_SALT_ROUNDS: "12"
+      AI_SERVICE_URL: "http://ai-service:8000"
+      AI_SERVICE_API_KEY: "${AI_SERVICE_API_KEY:-change_me_shared_secret}"
+      AI_TIMEOUT_MS: "60000"
+      UPLOAD_PATH: "/app/uploads"
+      MAX_FILE_SIZE: "10485760"
+      RATE_LIMIT_WINDOW_MS: "900000"
+      RATE_LIMIT_MAX: "100"
+      ALLOWED_ORIGINS: "${ALLOWED_ORIGINS:-http://localhost:3000}"
+    volumes:
+      - uploads_data:/app/uploads
+      - backend_logs:/app/logs
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD","wget","-qO-","http://localhost:5000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 15s
+    networks:
+      - smart_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: "${VITE_API_URL:-http://localhost:5000/api/v1}"
+    container_name: smart_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD","wget","-qO-","http://localhost:80"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - smart_net
+
+volumes:
+  mongodb_data:
+  mongodb_config:
+  uploads_data:
+  ai_logs:
+  backend_logs:
+
+networks:
+  smart_net:
+    driver: bridge
